@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Responsive p5.js Sketch</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
+        
+        /* Ensure no margins or scrolling */
+        * {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            touch-action: none; /* Prevent panning on touch devices */
+            font-family: "DM Mono", monospace;
+        }
+        
+        body, html {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Fullscreen canvas */
+        canvas {
+            display: block;
+        }
+
+        /* Controls container */
+        #controls {
+            position: fixed;
+            bottom: 0px;
+            left: 0px;
+            z-index: 10;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            box-sizing: border-box;
+            border-radius: 8px;
+            width: 100vw;
+            font-size: 12px; /* Adjust text size for smaller screens */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            backdrop-filter: blur(10px);
+            transition: max-height 0.3s ease; /* Smooth collapse/expand */
+            max-height: 300px; /* Default height for expanded state */
+            overflow: hidden;
+            transition: 0.3s opacity;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0px;
+            width:100%;
+            height: 20px;
+            overflow: visible
+        }
+
+        .control-group label {
+            flex: 0 0 150px;
+            text-align: left;
+            padding-right: 10px;
+        }
+
+        .control-group input, .control-group select {
+            flex: 2;
+            width: auto; /* Let input width adjust naturally */
+        }
+
+        input[type="checkbox"]{
+            flex: 0 0 16px;
+        }
+      
+        input[type="color"]{
+            flex: 0 0 28px;
+        }
+
+        #blendModeSelect{
+            margin-left: 4px; 
+        }
+
+        /* Button to toggle the controls */
+        #toggle-controls {
+            position: fixed;
+            bottom: 12px;
+            right: 12px;
+            z-index: 20;
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
+  @media (min-width: 768px) {
+    #controls {
+      width: 420px;
+      padding: 12px 32px;
+      bottom: 66px;
+    }
+    #toggle-controls {
+      left:24px;
+      right:auto;
+    }
+      }
+      
+
+
+    </style>
+</head>
+<body>
+    <!-- Button to expand/collapse controls -->
+    <button id="toggle-controls">Hide Controls</button>
+
+    <!-- Controls with flexbox layout -->
+    <div id="controls">
+        <div class="control-group">
+            <label for="xSlider">Spread: <span id="xValue">800</span></label>
+            <input id="xSlider" type="range" min="0" max="1600" value="800">
+        </div>
+
+        <div class="control-group">
+            <label for="radiusSlider">Radius: <span id="radiusValue">25</span></label>
+            <input id="radiusSlider" type="range" min="1" max="50" value="25">
+        </div>
+
+        <div class="control-group">
+            <label for="speedSlider">Speed: <span id="speedValue">10</span></label>
+            <input id="speedSlider" type="range" min="1" max="25" value="10">
+        </div>
+
+        <div class="control-group">
+            <label for="colorPicker">Primary Color</label>
+            <input id="colorPicker" type="color" value="#ff0000">
+            <select id="blendModeSelect">
+                <option value="blend">Normal Blend</option>
+                <option value="add">Add</option>
+                <option value="subtract">Subtract</option>
+                <option value="difference">Difference</option>
+                <option value="multiply">Multiply</option>
+                <option value="overlay">Overlay</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="alphaSlider">Opacity: <span id="alphaValue">80</span></label>
+            <input id="alphaSlider" type="range" min="0" max="100" value="80">
+        </div>
+      
+        <div class="control-group">
+            <label for="staggerSlider">Stagger Color: <span id="staggerValue">0</span></label>
+            <input id="staggerSlider" type="range" min="0" max="10" step="1" value="0">
+        </div>
+
+        <div class="control-group">
+            <label for="strokeCheckbox">Stroke</label>
+            <input id="strokeCheckbox" type="checkbox" checked>
+        </div>
+
+        <div class="control-group">
+            <label for="bgCheckbox">Redraw Background</label>
+            <input id="bgCheckbox" type="checkbox" checked>
+        </div>
+    </div>
+
+    <script src="sketch.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Update slider value display
+            const xSlider = document.getElementById('xSlider');
+            const xValue = document.getElementById('xValue');
+            xSlider.oninput = () => xValue.innerText = xSlider.value;
+
+            const alphaSlider = document.getElementById('alphaSlider');
+            const alphaValue = document.getElementById('alphaValue');
+            alphaSlider.oninput = () => alphaValue.innerText = alphaSlider.value;
+
+            const radiusSlider = document.getElementById('radiusSlider');
+            const radiusValue = document.getElementById('radiusValue');
+            radiusSlider.oninput = () => radiusValue.innerText = radiusSlider.value;
+
+            const speedSlider = document.getElementById('speedSlider');
+            const speedValue = document.getElementById('speedValue');
+            speedSlider.oninput = () => speedValue.innerText = speedSlider.value;
+
+            const staggerSlider = document.getElementById('staggerSlider');
+            const staggerValue = document.getElementById('staggerValue');
+            staggerSlider.oninput = () => staggerValue.innerText = staggerSlider.value;
+
+            // Expand/Collapse button logic
+            const toggleButton = document.getElementById('toggle-controls');
+            const controls = document.getElementById('controls');
+            let isExpanded = true;
+            
+            toggleButton.addEventListener('click', () => {
+                if (isExpanded) {
+                    // controls.style.maxHeight = '0px';
+                  controls.style.opacity = 0;
+                    toggleButton.textContent = 'Show Controls';
+                } else {
+                    // controls.style.maxHeight = '300px';
+                    controls.style.opacity = 1;
+                    toggleButton.textContent = 'Hide Controls';
+                }
+                isExpanded = !isExpanded;
+            });
+        });
+    </script>
+</body>
+</html>
